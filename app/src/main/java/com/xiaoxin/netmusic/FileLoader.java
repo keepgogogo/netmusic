@@ -50,11 +50,16 @@ public class FileLoader {
     public void getStorageAccess(Activity activity)
     {
         if(ContextCompat.checkSelfPermission(context, Manifest.
+                permission.WRITE_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED)
+        {
+            ActivityCompat.requestPermissions(activity,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
+        }
+        if(ContextCompat.checkSelfPermission(context, android.Manifest.
                 permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED)
         {
             ActivityCompat.requestPermissions(activity,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},1);
-
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},2);
         }
     }
 

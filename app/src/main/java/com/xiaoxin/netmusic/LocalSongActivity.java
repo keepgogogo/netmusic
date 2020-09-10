@@ -2,13 +2,18 @@ package com.xiaoxin.netmusic;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -56,6 +61,8 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_local_song);
 
+        setTitle("本地音乐");
+
         buttonForConfirmEditText=(Button)findViewById(R.id.ButtonForSearchInLocalSongActivity);
         buttonForConfirmEditText.setOnClickListener(this);
         editText=(EditText)findViewById(R.id.EditTextInLocalSongActivity);
@@ -86,6 +93,8 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
                 switch (viewName)
                 {
                     case CHOOSE:
+                        Song temp=adapter.getMData().get(position);
+
                         //TODO
                         break;
                     default:
@@ -93,7 +102,8 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
                 }
             }
         });
-
+        //获取存储权限
+        //getStorageAccess();
         //该方法调用rxjava读取手机中目前已存在的歌曲信息
         loadSongs();
         //该方法中启动对editText中内容变化的监听
@@ -130,6 +140,7 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
                     {
                         continue;
                     }
+                    temp.setName(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)));
                     temp.setAlbum(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)));
                     temp.setArtist(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)));
                     temp.setDuration(cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)));
@@ -155,9 +166,14 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
                         viewModel.getCurrentData().setValue(songs);
                         songsOfLocal=songs;
                         progressBar.setVisibility(View.GONE);
-                        progressBar.setMaxWidth(0);
+//                        progressBar.setMaxWidth(0);
                     }
-                });
+                }).doOnError(new Consumer<Throwable>() {
+            @Override
+            public void accept(Throwable throwable) throws Exception {
+                Log.d(TAG, "accept: lost");
+            }
+        }).subscribe();
     }
 
     /**
@@ -168,7 +184,7 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
         editText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                String m=s.toString();
+
 
             }
 
@@ -189,12 +205,20 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
                             List<Song> temp=new ArrayList<>();
                             for(Song song : songsOfLocal)
                             {
-                                if(song.getName().contains(m))
+
+                                if((song.getName()!=null)&&song.getName().contains(m))
                                 {
                                     temp.add(song);
                                 }
                             }
-                            emitter.onNext(temp);
+                            if (temp.size()==0)
+                            {
+                                emitter.onNext(null);
+                            }
+                            else
+                            {
+                                emitter.onNext(temp);
+                            }
                         }
                     }).map(new Function<List<Song>, List<Song>>() {
                         @Override
@@ -210,7 +234,7 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
                                 public void accept(List<Song> songs) throws Exception {
                                     viewModel.getCurrentData().setValue(songs);
                                 }
-                            });
+                            }).subscribe();
                 }
             }
 
@@ -238,6 +262,23 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
                 break;
             default:
                 break;
+        }
+    }
+
+    public void getStorageAccess()
+    {
+        if(ContextCompat.checkSelfPermission(this, android.Manifest.
+                permission.WRITE_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED)
+        {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
+
+        }
+        if(ContextCompat.checkSelfPermission(this, android.Manifest.
+                permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED)
+        {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},2);
         }
     }
 
