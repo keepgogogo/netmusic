@@ -3,14 +3,14 @@ package com.xiaoxin.netmusic.recycler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.xiaoxin.netmusic.R;
-import com.xiaoxin.netmusic.Song;
+import com.xiaoxin.netmusic.database.Song;
 
 import java.util.List;
 
@@ -45,17 +45,17 @@ public class LocalSongsAdapter
         String singerOfSong=mData.get(position).getArtist();
         holder.TextViewForNameOfSong.setText(nameOfSong==null?"":nameOfSong);
         holder.TextViewForNameOfSinger.setText(singerOfSong==null?"":singerOfSong);
-        holder.CardView.setTag(position);
+        holder.ButtonForChoose.setTag(position);
     }
 
     public class LocalSongsViewHolder extends RecyclerView.ViewHolder {
         public TextView TextViewForNameOfSong;
         public TextView TextViewForNameOfSinger;
-        public CardView CardView;
+        public Button ButtonForChoose;
         public LocalSongsViewHolder(@NonNull View itemView) {
             super(itemView);
-            CardView=(CardView)itemView.findViewById(R.id.CardViewForRecyclerInLocalSongs);
-            CardView.setOnClickListener(LocalSongsAdapter.this);
+            ButtonForChoose=(Button)itemView.findViewById(R.id.CardViewForRecyclerInLocalSongs);
+            ButtonForChoose.setOnClickListener(LocalSongsAdapter.this);
             TextViewForNameOfSinger=(TextView)itemView.findViewById(R.id.TextViewSingerNameInLocalSongRecyclerWidget);
             TextViewForNameOfSong=(TextView)itemView.findViewById(R.id.TextViewSongNameInLocalSongRecyclerWidget);
             viewHolder=LocalSongsViewHolder.this;
@@ -83,7 +83,7 @@ public class LocalSongsAdapter
         {
             switch (view.getId())
             {
-                case R.id.CardViewForRecyclerInLocalSongs:
+                case R.id.ButtonForChooseInLocalSongs:
                     clickListener.onClick(view,ViewNameLocalSong.CHOOSE,position);
                     break;
                 default:

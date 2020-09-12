@@ -2,23 +2,19 @@ package com.xiaoxin.netmusic;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.text.method.KeyListener;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -26,6 +22,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 
+import com.xiaoxin.netmusic.database.Song;
 import com.xiaoxin.netmusic.recycler.LocalSongsAdapter;
 import com.xiaoxin.netmusic.recycler.LocalSongsViewModel;
 
@@ -55,6 +52,7 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
     private LocalSongsViewModel viewModel;
     private RecyclerView.LayoutManager layoutManager;
     private List<Song> songsOfLocal;
+    private KeyListener keyListener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,13 +66,16 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
         editText=(EditText)findViewById(R.id.EditTextInLocalSongActivity);
         progressBar=(ProgressBar)findViewById(R.id.ProgressBarInLocalSongs);
         progressBar.setVisibility(View.VISIBLE);
+        keyListener=editText.getKeyListener();
+        editText.setKeyListener(null);
+        editText.setHint("请等待歌曲检索完成");
 
 
         recyclerView=(RecyclerView)findViewById(R.id.RecyclerViewLocalSongs);
         layoutManager=new LinearLayoutManager(this);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(layoutManager);
-        viewModel= ViewModelProviders.of(this).get(LocalSongsViewModel.class);
+        viewModel= new ViewModelProvider(this).get(LocalSongsViewModel.class);
         adapter=new LocalSongsAdapter();
 
         final Observer<List<Song>> ListOfSongsObserver= new Observer<List<Song>>() {
@@ -145,6 +146,7 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
                     temp.setArtist(cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)));
                     temp.setDuration(cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)));
                     temp.setId(cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)));
+                    temp.setAlbumId(cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)));
                     song.add(temp);
                 }
                 emitter.onNext(song);
@@ -166,6 +168,8 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
                         viewModel.getCurrentData().setValue(songs);
                         songsOfLocal=songs;
                         progressBar.setVisibility(View.GONE);
+                        editText.setKeyListener(keyListener);
+                        editText.setHint("请输入歌曲名称");
 //                        progressBar.setMaxWidth(0);
                     }
                 }).doOnError(new Consumer<Throwable>() {
@@ -182,16 +186,16 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
     public void editTextListenStart()
     {
         editText.addTextChangedListener(new TextWatcher() {
+
+
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-
             }
 
             @SuppressLint("CheckResult")
             @Override
-            public void onTextChanged(final CharSequence s, int start, int before, int count) {
-
+            public void onTextChanged(final CharSequence s, int start, int before, int count)
+            {
                 final String m=s.toString();
                 if(m.equals(""))
                 {
@@ -205,7 +209,6 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
                             List<Song> temp=new ArrayList<>();
                             for(Song song : songsOfLocal)
                             {
-
                                 if((song.getName()!=null)&&song.getName().contains(m))
                                 {
                                     temp.add(song);
@@ -213,7 +216,7 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
                             }
                             if (temp.size()==0)
                             {
-                                emitter.onNext(null);
+                                emitter.onNext(new ArrayList<Song>());
                             }
                             else
                             {
@@ -238,6 +241,8 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
                 }
             }
 
+
+
             @Override
             public void afterTextChanged(Editable s) {
 
@@ -257,6 +262,7 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
                 View viewFocus = this.getCurrentFocus();
                 if (viewFocus != null) {
                     InputMethodManager imManager = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                    assert imManager != null;
                     imManager.hideSoftInputFromWindow(viewFocus.getWindowToken(), 0);
                 }
                 break;
@@ -265,22 +271,22 @@ public class LocalSongActivity extends AppCompatActivity implements View.OnClick
         }
     }
 
-    public void getStorageAccess()
-    {
-        if(ContextCompat.checkSelfPermission(this, android.Manifest.
-                permission.WRITE_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED)
-        {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
-
-        }
-        if(ContextCompat.checkSelfPermission(this, android.Manifest.
-                permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED)
-        {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},2);
-        }
-    }
+//    public void getStorageAccess()
+//    {
+//        if(ContextCompat.checkSelfPermission(this, android.Manifest.
+//                permission.WRITE_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED)
+//        {
+//            ActivityCompat.requestPermissions(this,
+//                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
+//
+//        }
+//        if(ContextCompat.checkSelfPermission(this, android.Manifest.
+//                permission.READ_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED)
+//        {
+//            ActivityCompat.requestPermissions(this,
+//                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},2);
+//        }
+//    }
 
 
 }

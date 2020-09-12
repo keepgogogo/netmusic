@@ -3,7 +3,7 @@ package com.xiaoxin.netmusic.recycler;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.xiaoxin.netmusic.Song;
+import com.xiaoxin.netmusic.database.Song;
 
 import java.util.List;
 
